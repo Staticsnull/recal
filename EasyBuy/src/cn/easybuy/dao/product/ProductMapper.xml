@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.easybuy.dao.product.ProductMapper">
+	
+	<insert id="add" parameterType="Product">
+		insert into easybuy_product (name,description,price,stock,categoryLevel1Id,
+									categoryLevel2Id,categoryLevel3Id,fileName) 
+					values (#{name},#{description},#{price},#{stock},#{categoryLevel1Id},
+							#{categoryLevel2Id},#{categoryLevel3Id},#{fileName})
+	</insert>
+	
+	<update id="update" parameterType="Product">
+		 update easybuy_product 
+			 <trim prefix="set" suffixOverrides=",">
+		 		<if test="name != null">name=#{name},</if>
+				<if test="description != null">description=#{description},</if>
+				<if test="price != null">price=#{price},</if>
+				<if test="stock != null">stock=#{stock},</if>
+				<if test="categoryLevel1Id != null">categoryLevel1Id=#{categoryLevel1Id},</if>
+				<if test="categoryLevel2Id != null">categoryLevel2Id=#{categoryLevel2Id},</if>
+				<if test="categoryLevel3Id != null">categoryLevel3Id=#{categoryLevel3Id},</if>
+				<if test="fileName != null">fileName=#{fileName},</if>
+			 </trim>
+			 where id = #{id}
+	</update>
+	
+	<delete id="deleteProductById" parameterType="Integer">
+		delete from easybuy_product where id=#{id}
+	</delete>
+	
+	<select id="getProductById" resultType="Product">
+		select * from easybuy_product where id=#{id}
+	</select>
+	
+	<sql id="getNameAndLevel">
+		<if test="proName != null and proName!= ''">
+				and p.name like CONCAT ('%',#{proName},'%')
+			</if>
+			<if test="level == 1 and categoryId != null">
+				and p.categoryLevel1Id=#{categoryId}
+			</if>
+			<if test="level == 2 and categoryId != null">
+				and p.categoryLevel2Id=#{categoryId}
+			</if>
+			<if test="level == 3 and categoryId != null">
+				and p.categoryLevel3Id=#{categoryId}
+			</if>
+	</sql>
+	<select id="getProductList" resultType="product">
+		select p.* from easybuy_product p where 1=1
+			<include refid="getNameAndLevel"/>
+			limit #{currentPageNo},#{pageSize}
+	</select>
+
+
+	<select id="count" resultType="int">
+		select count(1) as count from easybuy_product p where 1=1
+			<include refid="getNameAndLevel"/>
+	</select>
+	
+	<update id="updateStock">
+		 update easybuy_product 
+			 <trim prefix="set" suffixOverrides=",">
+				<if test="stock != null">stock=#{stock}</if>
+			 </trim>
+			 where id = #{id}
+	</update>
+
+</mapper>

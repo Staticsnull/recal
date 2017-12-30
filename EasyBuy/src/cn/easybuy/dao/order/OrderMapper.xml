@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.easybuy.dao.order.OrderMapper">
+
+	<!--( 仅 对 insert 有 用 ) 使用useGeneratedKeys告 诉 MyBatis 使 用 JDBC 的
+		getGeneratedKeys 方法来取出由数据 ( 比如 : 像 MySQL 和 SQL Server
+		这样的数据库管理系统的自动递增字段 ) 内部生成的主键。 默认值 :false   -->
+	<insert id="add" parameterType="order" 
+			useGeneratedKeys="true" keyProperty="id">
+		insert into easybuy_order (userId,loginName,userAddress,createTime,cost,serialNumber) 
+					values (#{userId},#{loginName},#{userAddress},#{createTime},#{cost},#{serialNumber})
+	</insert>
+	<sql id="checkUserId">
+		<if test="userId != null">
+					and o.userId = #{userId}
+		</if>
+	</sql>
+	<!-- <cache  eviction="FIFO" flushInterval="60000" size="512" readOnly="true"/> -->
+	<!-- 查询订单列表(分页显示) -->
+	<select id="getOrderList" resultMap="orderList" >
+		<!-- flushCache="true" useCache="false" -->
+		SELECT o.*,d.id AS d_id,d.orderId,d.productId,
+				p.name AS productName, p.fileName,d.quantity,d.cost AS d_cost
+				FROM easybuy_order o,easybuy_order_detail d,easybuy_product p 
+				WHERE o.id=d.orderId AND p.id=d.productId		
+			<include refid="checkUserId"/>
+			order by o.createTime DESC limit #{from},#{pageSize}
+	</select>
+	
+	<resultMap type="Order" id="orderList">
+		<id property="id" column="id"/>
+		<result property="userId" column="userId"/>
+		<result property="loginName" column="loginName"/>
+		<result property="userAddress" column="userAddress"/>
+		<result property="cost" column="cost"/>
+		<result property="serialNumber" column="serialNumber"/>
+		<!--一对多  -->
+		<collection property="orderDetailList" ofType="OrderDetail" resultMap="orderDetailList"/>
+	</resultMap>
+	<resultMap type="OrderDetail" id="orderDetailList">
+		<id property="id" column="d_id"/>
+		<result property="orderId" column="orderId"/>
+		<result property="quantity" column="quantity"/>
+		<result property="productId" column="productId"/>
+		<result property="cost" column="d_cost"/>
+		<!--一对一  -->
+		<association property="product" javaType="Product" resultMap="productResult"/>
+	</resultMap>
+	
+	<resultMap type="Product" id="productResult">
+		<id property="id" column="productId"/>
+		<result property="name" column="productName"/>
+		<result property="fileName" column="fileName"/>
+	</resultMap>
+
+	<select id="count" resultType="int">
+		select count(1) as count from easybuy_order o
+			<trim prefix="where" prefixOverrides="and | or">
+				<include refid="checkUserId"/>
+			</trim>
+	</select>
+
+</mapper>

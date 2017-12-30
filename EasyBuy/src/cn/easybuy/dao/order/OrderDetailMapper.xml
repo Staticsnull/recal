@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.easybuy.dao.order.OrderDetailMapper">
+	<insert id="add" parameterType="orderDetail">
+		insert into easybuy_order_detail (orderId,productId,quantity,cost) 
+					values (#{orderId},#{product.id},#{quantity},#{cost})
+	</insert>
+	
+	<!--根据orderId查询商品明细列表-->
+	<select id="getOrderDetailList" resultMap="orderDetailList"> 
+		<!-- flushCache="true" useCache="false" -->
+		SELECT d.id,d.orderId,d.productId,p.name AS productName, 
+				p.fileName,d.quantity,d.cost
+				FROM easybuy_order_detail d,easybuy_product p 
+				WHERE p.id=d.productId		
+		<if test="orderId != null">
+				and d.orderId = #{orderId}
+		</if>
+	</select>
+	
+	<resultMap type="OrderDetail" id="orderDetailList">
+		<id property="id" column="id"/>
+		<result property="orderId" column="orderId"/>
+		<result property="quantity" column="quantity"/>
+		<result property="cost" column="cost"/>
+		<association property="product" javaType="Product" resultMap="productResult"/>
+	</resultMap>
+	
+	<resultMap type="Product" id="productResult">
+		<id property="id" column="productId"/>
+		<result property="name" column="productName"/>
+		<result property="fileName" column="fileName"/>
+	</resultMap>
+</mapper>
